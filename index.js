@@ -1,11 +1,21 @@
+// index.js
+import express from "express";
 import OpenAI from "openai";
 import fetch from "node-fetch";
 import dotenv from "dotenv";
 dotenv.config();
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-async function run() {
+// ✅ 1. 서버 살아있다는 확인용 라우트
+app.get("/", (req, res) => {
+  res.send("✅ Assistant-runner is running!");
+});
+
+// ✅ 2. GPT Assistant 자동 실행
+async function runAssistant() {
+  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const thread = await openai.beta.threads.create();
 
   await openai.beta.threads.messages.create(thread.id, {
@@ -46,8 +56,12 @@ async function run() {
     });
 
     const messages = await openai.beta.threads.messages.list(thread.id);
-    console.log("✅ Final Response:\n", messages.data[0].content[0].text.value);
+    console.log("✅ Final GPT response:", messages.data[0].content[0].text.value);
   }
 }
 
-run();
+// ✅ 3. 서버 실행 + GPT 자동 실행
+app.listen(PORT, () => {
+  console.log(`🟢 Server running on port ${PORT}`);
+  runAssistant(); // 서버 켜질 때 한 번 실행
+});
